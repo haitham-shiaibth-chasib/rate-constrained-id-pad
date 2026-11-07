@@ -1,0 +1,51 @@
+cropped_root: data/midvdynattack/cropped
+split_root: data/splits_kfold_s0
+out_dir: results/pilot
+folds:
+- 0
+- 1
+- 2
+- 3
+- 4
+pool_frames: 8
+n_jobs: 2
+train_attacks:
+- copy_without_holo
+- pseudo_holo_copy
+- photo_holo_copy
+test_attacks:
+- copy_without_holo
+- pseudo_holo_copy
+- photo_holo_copy
+- photo_replacement
+budgets:
+- null
+- 96000
+- 38000
+- 15000
+- 6000
+- 2400
+- 1000
+codecs:
+- jpeg
+- webp
+strategies:
+- uniform
+- chroma
+- roi
+k_frames:
+- 1
+- 3
+- 6
+roi_share: 0.6
+roi_area_fraction: 0.25
+gate:
+  baseline_plan: uniform-jpeg-K1
+  min_degradation_eer: 0.05
+  low_budgets:
+  - 2400
+  - 1000
+  min_relative_gain: 0.2
+  min_budgets_with_gain: 2
+  min_folds_improved: 4
+  detector: descriptor_lr

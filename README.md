@@ -82,3 +82,15 @@ tests/       test_core.py
 ## License
 
 Code: MIT. Data remain under their original licenses.
+
+## Study v2: frames versus quality under a byte budget
+
+The pilot (v1) ended NO-GO and is kept as a negative result; see `docs/protocol_v2.md`
+for why and for the v2 hypotheses, fixed before running. v2 asks how a phone should split
+a fixed payload between the number of frames, per-frame quality, resolution and codec.
+
+```bash
+python scripts/build_cache_v2.py          # encode + embed every frame on the grid (~70 min CPU)
+python -m idpad.study_v2                  # per-fold configs, policies, decision
+python scripts/plot_v2.py
+```
