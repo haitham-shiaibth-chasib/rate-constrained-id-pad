@@ -1,0 +1,29 @@
+# Pilot experiment (go / no-go gate). Gate thresholds are fixed BEFORE the run.
+cropped_root: data/midvdynattack/cropped     # from Zenodo 17079529, cropped.tar.gz
+split_root: data/splits_kfold_s0             # public 5-fold splits (Pouliquen et al.)
+out_dir: results/pilot
+folds: [0, 1, 2, 3, 4]
+pool_frames: 8            # frames read per clip (evenly spaced); plans send K of them
+n_jobs: -1
+
+# Attack species used for training (photo_replacement is held out, as in the public protocol)
+train_attacks: [copy_without_holo, pseudo_holo_copy, photo_holo_copy]
+test_attacks: [copy_without_holo, pseudo_holo_copy, photo_holo_copy, photo_replacement]
+
+# Total uplink payload per verification attempt, in bytes. null = reference (no re-encoding)
+budgets: [null, 64000, 32000, 16000, 8000, 4000, 2000]
+
+codecs: [jpeg, webp]      # add avif for the full study (slower)
+strategies: [uniform, chroma, roi]
+k_frames: [1, 3, 6]
+roi_share: 0.6
+roi_area_fraction: 0.25
+
+gate:
+  baseline_plan: uniform-jpeg-K1      # conventional practice: one JPEG 4:2:0 photo
+  min_degradation_eer: 0.05           # (a) baseline EER must rise >= 5 points at the low budgets
+  low_budgets: [4000, 2000]
+  min_relative_gain: 0.20             # (b) forensic-aware vs uniform: >= 20 % lower EER ...
+  min_budgets_with_gain: 2            #     ... at >= 2 budgets ...
+  min_folds_improved: 4               #     ... with the gain present in >= 4 of 5 folds
+  detector: descriptor_lr

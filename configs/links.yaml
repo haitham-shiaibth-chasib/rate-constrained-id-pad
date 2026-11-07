@@ -1,0 +1,6 @@
+# Uplink assumptions (edit and cite your own measurements if available).
+links:
+  - {name: geo_satellite_vsat, uplink_kbps: 512,   rtt_ms: 650, loss: 0.01}
+  - {name: 3g_weak,            uplink_kbps: 256,   rtt_ms: 200, loss: 0.02}
+  - {name: 4g_typical,         uplink_kbps: 5000,  rtt_ms: 60,  loss: 0.005}
+  - {name: fiber_office,       uplink_kbps: 20000, rtt_ms: 20,  loss: 0.0}

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idpad"
+version = "0.1.0"
+description = "Rate-constrained presentation attack detection for remote ID-document verification"
+requires-python = ">=3.10"
+authors = [{name = "Haitham Shiaibth Chasib"}]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
