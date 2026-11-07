@@ -26,7 +26,7 @@ from .metrics import bootstrap_ci, bpcer_at_apcer, eer
 
 KS = (1, 2, 4, 8, 16)
 CODECS = ("jpeg", "webp")
-SCALES = (1.0, 0.5)
+SCALES = (1.0, 0.5, 0.25)
 BUDGETS = (64000, 32000, 16000, 8000, 4000, 2000)
 
 
@@ -109,6 +109,39 @@ def run_fold(cache, root, splits, fold):
     return rows
 
 
+def run_unseen(cache, root, splits, fold, pol_fold: pd.DataFrame, configs_fold: pd.DataFrame):
+    """Unseen MIDV-DynAttack species (test identities only), WebP plans.
+
+    For each budget the WebP plan with the lowest *validation* EER on MIDV-Holo attacks
+    is applied unchanged; the model never saw any DynAttack species.
+    """
+    tr = D.load_fold(root, splits, fold, "train", D.MIDV_HOLO_ATTACKS[:3])
+    te = D.load_fold(root, splits, fold, "test", D.DYNATTACK_ATTACKS)
+    Etr, Ete = load_cache(cache, tr), load_cache(cache, te)
+    ytr, yte = np.array([c.label for c in tr]), np.array([c.label for c in te])
+    species = np.array([c.attack_type for c in te])
+    val = configs_fold[(configs_fold.split == "val") & (configs_fold.codec.isin(["webp", "ref"]))].dropna(subset=["eer"])
+    rows, models = [], {}
+    for b in [-1, *BUDGETS]:
+        for policy, cond in (("photo", val.k == 1), ("video16", val.k == 16), ("adaptive", val.k > 0)):
+            v = val[(val.budget == b) & cond]
+            if v.empty:
+                rows.append(dict(fold=fold, budget=b, policy=policy, eer=np.nan)); continue
+            best = v.sort_values(["eer", "mean_bytes"]).iloc[0]
+            k = int(best.k)
+            models.setdefault(k, fit(Etr, ytr, k))
+            codec = None if b == -1 else "webp"
+            s, ok, nb = score_config(models[k], Ete, k, codec, float(best.scale), None if b == -1 else b)
+            row = dict(fold=fold, budget=b, policy=policy, k=k, scale=float(best.scale), mean_bytes=nb,
+                       **metrics_row(yte, s, ok))
+            if ok.all():
+                for sp in np.unique(species[yte == 1]):
+                    m = (yte == 0) | (species == sp)
+                    row[f"eer_{sp}"] = eer(yte[m], s[m])
+            rows.append(row)
+    return rows
+
+
 def policies(df: pd.DataFrame) -> pd.DataFrame:
     """photo / video16 / adaptive, each selected on validation EER, read on test."""
     out = []
@@ -147,6 +180,7 @@ def main(argv=None):
     ap.add_argument("--split_root", default="data/splits_kfold_s0")
     ap.add_argument("--folds", type=int, nargs="*", default=[0, 1, 2, 3, 4])
     ap.add_argument("--out", default="results/v2")
+    ap.add_argument("--unseen", action="store_true", help="also evaluate MIDV-DynAttack (needs its cache)")
     a = ap.parse_args(argv)
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -158,6 +192,12 @@ def main(argv=None):
     dec = decision(pol)
     (out / "decision.json").write_text(json.dumps(dec, indent=2))
     print(json.dumps(dec, indent=2))
+    if a.unseen:
+        urows = []
+        for f in a.folds:
+            urows += run_unseen(Path(a.cache), a.cropped_root, a.split_root, f, pol[pol.fold == f], df[df.fold == f])
+        pd.DataFrame(urows).to_csv(out / "unseen_dynattack.csv", index=False)
+        print("unseen done", flush=True)
 
 
 if __name__ == "__main__":

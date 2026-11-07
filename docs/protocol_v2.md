@@ -53,3 +53,11 @@ upload time per link profile in `configs/links.yaml`.
 Note fixed in advance: a policy whose plan cannot fit the budget for every clip is
 "not deployable" at that budget; for H2 an undeployable baseline counts as beaten.
 A plan is only scored when it is feasible for all clips of the split.
+
+## Extensions run after the main v2 analysis (reported separately)
+
+* v2b: a third resolution level (scale 0.25) added to the grid. Same decision rule.
+* Unseen attacks: the twelve MIDV-DynAttack species, test identities only, with the
+  WebP plan selected on MIDV-Holo validation data applied unchanged.
+* Link profiles in `configs/links.yaml` replaced by published medians (Ookla 2025-2026,
+  GPRS crowd measurements).

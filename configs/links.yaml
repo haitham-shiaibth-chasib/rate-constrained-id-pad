@@ -1,6 +1,12 @@
-# Uplink assumptions (edit and cite your own measurements if available).
+# Uplink profiles grounded in published measurements (medians unless stated).
+# iraq_mobile_median : Ookla Speedtest Global Index, May 2026 (Iraq mobile upload ~20 Mbps);
+#                      latency 83 ms from SpeedOf.Me H1-2026 Iraq median.
+# geo_hughesnet      : Ookla, Q1 2025 US satellite report: median upload 4.44 Mbps, latency 683 ms.
+# geo_viasat         : same report: median upload 1.08 Mbps, latency 684 ms.
+# gprs_2g            : Netradar crowd data 2012-2015 (cited in core.ac.uk/326834821): GPRS median
+#                      upload 8 kbps; GPRS RTTs around 1000 ms (Cambridge GPRS study, Globecom 2002).
 links:
-  - {name: geo_satellite_vsat, uplink_kbps: 512,   rtt_ms: 650, loss: 0.01}
-  - {name: 3g_weak,            uplink_kbps: 256,   rtt_ms: 200, loss: 0.02}
-  - {name: 4g_typical,         uplink_kbps: 5000,  rtt_ms: 60,  loss: 0.005}
-  - {name: fiber_office,       uplink_kbps: 20000, rtt_ms: 20,  loss: 0.0}
+  - {name: iraq_mobile_median, uplink_kbps: 20000, rtt_ms: 83,   loss: 0.0}
+  - {name: geo_hughesnet,      uplink_kbps: 4440,  rtt_ms: 683,  loss: 0.0}
+  - {name: geo_viasat,         uplink_kbps: 1080,  rtt_ms: 684,  loss: 0.0}
+  - {name: gprs_2g,            uplink_kbps: 8,     rtt_ms: 1000, loss: 0.0}

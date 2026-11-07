@@ -16,7 +16,7 @@ from idpad import data as D
 from idpad.cnn import frame_embeddings
 
 CODECS = ("jpeg", "webp")
-SCALES = (1.0, 0.5)
+SCALES = (1.0, 0.5, 0.25)
 QUALITIES = (5, 10, 20, 30, 45, 60, 75, 90)
 N_FRAMES = 16
 
@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--out", default="data/cache_v2")
     ap.add_argument("--attacks", nargs="*", default=list(D.MIDV_HOLO_ATTACKS))
     ap.add_argument("--threads", type=int, default=2)
+    ap.add_argument("--codecs", nargs="*", default=list(CODECS))
+    ap.add_argument("--scales", type=float, nargs="*", default=list(SCALES))
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
     out = Path(a.out)
@@ -60,22 +62,24 @@ def main():
     t0 = time.time()
     for i, c in enumerate(clips):
         f = out / c.attack_type / f"{c.name.replace('/', '__')}.npz"
-        if f.exists():
+        res = dict(np.load(f)) if f.exists() else {}
+        todo = [(cd, s) for cd in a.codecs for s in a.scales if f"{cd}_{s}_emb" not in res]
+        if res and not todo:
             continue
         f.parent.mkdir(parents=True, exist_ok=True)
         frames = [Image.open(p).convert("RGB") for p in D.sample_frames(c, N_FRAMES)]
-        res = {"ref_emb": frame_embeddings(frames).astype(np.float16),
-               "ref_bytes": np.array([p.stat().st_size for p in D.sample_frames(c, N_FRAMES)])}
-        for codec in CODECS:
-            for s in SCALES:
-                sizes, decs = [], []
-                for q in QUALITIES:
-                    row = [encode_decode(im, codec, s, q) for im in frames]
-                    sizes.append([n for n, _ in row])
-                    decs.extend(d for _, d in row)
-                emb = frame_embeddings(decs).reshape(len(QUALITIES), len(frames), -1)
-                res[f"{codec}_{s}_bytes"] = np.array(sizes, dtype=np.int32)
-                res[f"{codec}_{s}_emb"] = emb.astype(np.float16)
+        if "ref_emb" not in res:
+            res["ref_emb"] = frame_embeddings(frames).astype(np.float16)
+            res["ref_bytes"] = np.array([p.stat().st_size for p in D.sample_frames(c, N_FRAMES)])
+        for codec, s in todo:
+            sizes, decs = [], []
+            for q in QUALITIES:
+                row = [encode_decode(im, codec, s, q) for im in frames]
+                sizes.append([n for n, _ in row])
+                decs.extend(d for _, d in row)
+            emb = frame_embeddings(decs).reshape(len(QUALITIES), len(frames), -1)
+            res[f"{codec}_{s}_bytes"] = np.array(sizes, dtype=np.int32)
+            res[f"{codec}_{s}_emb"] = emb.astype(np.float16)
         np.savez_compressed(f, **res)
         if i % 10 == 0:
             el = time.time() - t0
