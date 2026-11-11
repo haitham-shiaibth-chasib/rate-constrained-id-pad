@@ -1,4 +1,10 @@
-# Study protocol v2 (fixed before running the v2 experiments)
+# Study protocol v2
+
+Written before the five-fold v2 run and committed together with the analysis code
+(commit 1f202d7). The detector had already been inspected on fold 0, whose reference
+EERs are quoted below; the protocol is therefore *specified in advance of the five-fold
+evaluation*, not pre-registered in the strict sense. Section "v3 additions" at the end
+lists what was added after review; none of it changes the v2 hypotheses or thresholds.
 
 ## Why a second protocol
 
@@ -61,3 +67,15 @@ A plan is only scored when it is feasible for all clips of the split.
   WebP plan selected on MIDV-Holo validation data applied unchanged.
 * Link profiles in `configs/links.yaml` replaced by published medians (Ookla 2025-2026,
   GPRS crowd measurements).
+
+
+## v3 additions (after internal review)
+
+* Metric fixes: EER crossing search over the whole ROC; BPCER20 kept at APCER = 4/80.
+  After the fix H2 passes at no budget (v2: 2, v2b: 1), so the decision stays NO-GO.
+* Reporting: clip-bootstrap 95 % CIs for each policy, paired bootstrap tests with Holm
+  correction across budgets, BPCER20, and worst-species APCER at a validation threshold.
+* H3 (codec) re-tested with validation-only plan selection.
+* Ablations: frames in a short window instead of spread over the tilt; compression-aware
+  training; H.264 coding of the sixteen frames as one stream (CRF 24-48, scale 0.5 or 0.25).
+* Network model: slow start, TLS 1.3, per-segment and HTTP header overhead.

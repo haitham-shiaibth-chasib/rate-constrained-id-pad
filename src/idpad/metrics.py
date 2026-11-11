@@ -6,29 +6,46 @@ import numpy as np
 from sklearn.metrics import roc_curve
 
 
+def _roc(labels: np.ndarray, scores: np.ndarray):
+    """ROC points at every distinct threshold (same as sklearn's roc_curve with
+    drop_intermediate=False, without its overhead; used inside bootstrap loops)."""
+    o = np.argsort(-scores, kind="mergesort")
+    s, y = scores[o], labels[o]
+    idx = np.r_[np.nonzero(np.diff(s))[0], len(s) - 1]
+    tps = np.cumsum(y)[idx]
+    fps = idx + 1 - tps
+    return np.r_[0.0, fps / fps[-1]], np.r_[0.0, tps / tps[-1]]
+
+
 def eer(labels: np.ndarray, scores: np.ndarray) -> float:
+    """Equal error rate: the point where APCER = BPCER, linearly interpolated on the ROC.
+
+    Along the ROC, d = APCER - BPCER never increases, so the crossing lies between the
+    last point with d > 0 and the first point with d <= 0.
+    """
     labels, scores = np.asarray(labels), np.asarray(scores)
     if len(np.unique(labels)) < 2:
         return float("nan")
-    fpr, tpr, _ = roc_curve(labels, scores)  # fpr = BPCER, 1 - tpr = APCER
-    fnr = 1 - tpr
-    i = np.nanargmin(np.abs(fnr - fpr))
-    # linear interpolation between neighbours for a less jumpy estimate
-    if i + 1 < len(fpr):
-        d0, d1 = fnr[i] - fpr[i], fnr[i + 1] - fpr[i + 1]
-        if d0 != d1 and np.sign(d0) != np.sign(d1):
-            a = d0 / (d0 - d1)
-            return float(fpr[i] + a * (fpr[i + 1] - fpr[i]))
-    return float((fpr[i] + fnr[i]) / 2)
+    fpr, tpr = _roc(labels, scores)  # fpr = BPCER, 1 - tpr = APCER
+    d = (1 - tpr) - fpr
+    j = int(np.argmax(d <= 0))
+    if d[j] == 0 or j == 0:
+        return float(fpr[j])
+    a = d[j - 1] / (d[j - 1] - d[j])
+    return float(fpr[j - 1] + a * (fpr[j] - fpr[j - 1]))
 
 
 def bpcer_at_apcer(labels: np.ndarray, scores: np.ndarray, apcer: float = 0.05) -> float:
-    """Lowest BPCER whose APCER <= ``apcer`` (BPCER-at-APCER operating point)."""
+    """Lowest BPCER whose APCER <= ``apcer``. With apcer = 0.05 this is BPCER20 (ISO/IEC 30107-3).
+
+    A small tolerance keeps operating points such as 4/80 = 0.05 that floating point
+    would otherwise place just above the limit.
+    """
     labels, scores = np.asarray(labels), np.asarray(scores)
     if len(np.unique(labels)) < 2:
         return float("nan")
     fpr, tpr, _ = roc_curve(labels, scores)
-    ok = (1 - tpr) <= apcer
+    ok = (1 - tpr) <= apcer + 1e-9
     return float(fpr[ok].min()) if ok.any() else 1.0
 
 
@@ -41,9 +58,10 @@ def apcer_bpcer_at(labels: np.ndarray, scores: np.ndarray, threshold: float) -> 
 
 
 def threshold_at_eer(labels: np.ndarray, scores: np.ndarray) -> float:
-    fpr, tpr, thr = roc_curve(labels, scores)
-    i = np.nanargmin(np.abs((1 - tpr) - fpr))
-    return float(thr[i])
+    """Score threshold at the first ROC point where APCER <= BPCER (set on validation)."""
+    fpr, tpr, thr = roc_curve(labels, scores, drop_intermediate=False)
+    j = int(np.argmax((1 - tpr) - fpr <= 0))
+    return float(min(thr[j], 1.0))
 
 
 def max_apcer_per_species(labels, scores, species, threshold: float) -> tuple[float, dict]:

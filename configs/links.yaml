@@ -1,12 +1,16 @@
-# Uplink profiles grounded in published measurements (medians unless stated).
-# iraq_mobile_median : Ookla Speedtest Global Index, May 2026 (Iraq mobile upload ~20 Mbps);
-#                      latency 83 ms from SpeedOf.Me H1-2026 Iraq median.
-# geo_hughesnet      : Ookla, Q1 2025 US satellite report: median upload 4.44 Mbps, latency 683 ms.
-# geo_viasat         : same report: median upload 1.08 Mbps, latency 684 ms.
-# gprs_2g            : Netradar crowd data 2012-2015 (cited in core.ac.uk/326834821): GPRS median
-#                      upload 8 kbps; GPRS RTTs around 1000 ms (Cambridge GPRS study, Globecom 2002).
+# Uplink profiles. Each line names its source; values are medians unless stated.
+# iraq_mobile_median : SpeedOf.Me, Iraq page (2026): median upload 21.4 Mbps, latency 83 ms
+#                      (all devices; mobile devices ran 92 % of the tests).
+# iraq_operator_low  : Opensignal Iraq report, Jan 2025: upload speed experience of the slowest
+#                      operator (Korek) 4.5 Mbps (Zain 6.8, Asiacell 9.6); latency taken from SpeedOf.Me.
+# geo_hughesnet      : Ookla, US satellite performance report Q1 2025: median upload 4.44 Mbps,
+#                      latency 683 ms (US measurements).
+# geo_viasat         : same report: median upload 1.08 Mbps, latency 684 ms (US measurements).
+# gprs_2g            : GPRS median upload 8 kbps (Sonntag 2016, as reported by Pfitzinger et al.,
+#                      HICSS-52, 2019); RTT about 1 s (Chakravorty and Pratt, MWCN 2002).
 links:
-  - {name: iraq_mobile_median, uplink_kbps: 20000, rtt_ms: 83,   loss: 0.0}
+  - {name: iraq_mobile_median, uplink_kbps: 21400, rtt_ms: 83,   loss: 0.0}
+  - {name: iraq_operator_low,  uplink_kbps: 4500,  rtt_ms: 83,   loss: 0.0}
   - {name: geo_hughesnet,      uplink_kbps: 4440,  rtt_ms: 683,  loss: 0.0}
   - {name: geo_viasat,         uplink_kbps: 1080,  rtt_ms: 684,  loss: 0.0}
   - {name: gprs_2g,            uplink_kbps: 8,     rtt_ms: 1000, loss: 0.0}

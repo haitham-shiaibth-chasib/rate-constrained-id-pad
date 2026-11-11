@@ -100,3 +100,18 @@ def test_gate_logic():
                                                min_budgets_with_gain=2, min_folds_improved=4,
                                                detector="descriptor_lr"))
     assert v["decision"] == "GO"
+
+
+def test_bpcer20_keeps_exact_operating_point():
+    from idpad.metrics import bpcer_at_apcer
+    # 80 attacks, 4 of them score below every bona fide -> APCER = 4/80 = 0.05 exactly at BPCER 0
+    y = np.r_[np.zeros(20), np.ones(80)]
+    s = np.r_[np.full(20, 0.5), np.full(4, 0.1), np.full(76, 0.9)]
+    assert bpcer_at_apcer(y, s, 0.05) == 0.0
+
+
+def test_eer_symmetric_case():
+    from idpad.metrics import eer
+    y = np.r_[np.zeros(4), np.ones(4)]
+    s = np.array([0.1, 0.2, 0.3, 0.6, 0.4, 0.7, 0.8, 0.9])  # one error each side
+    assert abs(eer(y, s) - 0.25) < 1e-9
