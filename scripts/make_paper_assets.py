@@ -86,11 +86,11 @@ def comparisons(res, families):
 
 
 NAMES = {"adaptive_vs_photo": "Photo → adaptive", "adaptive_vs_video16": "Video16 → adaptive",
-         "webp_vs_jpeg": "JPEG → WebP (adaptive)", "spread_vs_window": "Window → spread frames",
+         "webp_vs_jpeg": "JPEG → WebP", "spread_vs_window": "Window → spread frames",
          "ca_vs_clean": "Clean → CA training, adaptive", "ca_vs_clean_k16": "Clean → CA training, K = 16",
          "ca_vs_clean_k1": "Clean → CA training, K = 1", "h264_vs_adaptive": "Adaptive stills → H.264",
-         "h264_vs_stills_k16": "Video16 stills → H.264", "ca_vs_clean_h264": "H.264 → H.264 with CA training",
-         "h264ca_vs_adaptive": "Adaptive stills → H.264 with CA training"}
+         "h264_vs_stills_k16": "Video16 stills → H.264", "ca_vs_clean_h264": "H.264 → H.264 CA",
+         "h264ca_vs_adaptive": "Adaptive stills → H.264 CA"}
 
 
 def comparisons_wide(res, families):
@@ -110,6 +110,37 @@ def comparisons_wide(res, families):
             else:
                 r1[KB[b]] = r2[KB[b]] = "–"
         rows += [r1, r2]
+    return pd.DataFrame(rows)
+
+
+def comparisons_compact(res, families):
+    """One row per comparison: mean paired difference [95 % CI] with Holm marks (* < 0.05, ** < 0.01)."""
+    c = pd.read_csv(res / "comparisons.csv")
+    rows = []
+    for fam in families:
+        g = c[c.family == fam].set_index("budget")
+        r = {"Comparison": NAMES[fam]}
+        for b in BUDGETS:
+            if b in g.index:
+                x = g.loc[b]
+                mark = "**" if x.p_holm < 0.01 else ("*" if x.p_holm < 0.05 else "")
+                r[KB[b]] = f"{100 * x['diff']:.1f} [{100 * x.ci_lo:.1f}, {100 * x.ci_hi:.1f}]{mark}".replace("-", "\u2212")
+            else:
+                r[KB[b]] = "\u2013"
+        rows.append(r)
+    return pd.DataFrame(rows)
+
+
+def policy_compact(res, policies):
+    """One row per budget: test EER / BPCER20 (%) per policy."""
+    p = pd.read_csv(res / "policies.csv")
+    rows = []
+    for b in BUDGETS:
+        r = {"Budget (kB)": KB[b]}
+        for pol in policies:
+            g = p[(p.policy == pol) & (p.budget == b)].dropna(subset=["eer"])
+            r[LAB[pol]] = "\u2013" if len(g) < 5 else f"{pct(g.eer.mean())} / {pct(g.bpcer20.mean())}"
+        rows.append(r)
     return pd.DataFrame(rows)
 
 
@@ -141,7 +172,7 @@ def time_table(links_yaml, res):
     src16 = p[(p.policy == "video16") & (p.budget == -1)].max_bytes.max()
     rows = []
     for b in [*BUDGETS, int(src16)]:
-        r = {"Payload": f"{b // 1000} kB" if b in BUDGETS else f"{b / 1000:.0f} kB (16 source frames, largest clip)"}
+        r = {"Payload": f"{b // 1000} kB" if b in BUDGETS else f"{b / 1000:.0f} kB (16 source frames)"}
         for l in links:
             t = l.upload_seconds_tcp(b)
             r[l.name] = f"{t:.2f}" if t < 10 else f"{t:.0f}"
@@ -217,6 +248,9 @@ def main():
     t["table2"] = policy_table(res, pols)
     t["table3"] = comparisons_wide(res, ["adaptive_vs_photo", "adaptive_vs_video16", "webp_vs_jpeg"])
     t["table4"] = comparisons_wide(res, ["h264_vs_adaptive", "h264_vs_stills_k16", "ca_vs_clean_h264", "h264ca_vs_adaptive"])
+    t["table2c"] = policy_compact(res, pols)
+    t["table3c"] = comparisons_compact(res, ["adaptive_vs_photo", "adaptive_vs_video16", "webp_vs_jpeg", "h264_vs_adaptive",
+                                              "h264_vs_stills_k16", "ca_vs_clean_h264", "h264ca_vs_adaptive"])
     t["table4b"] = comparisons_wide(res, ["spread_vs_window", "ca_vs_clean", "ca_vs_clean_k16", "ca_vs_clean_k1"])
     t["table5"], t["table5b"] = unseen_table(res)
     t["table6"] = time_table(a.links, res)

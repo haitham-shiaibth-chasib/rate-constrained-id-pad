@@ -36,12 +36,12 @@ make paper                               # every table and figure
 | --- | --- | --- |
 | Figure 1 | `scripts/fig_pipeline.py` | `results/paper/fig1_pipeline.png` |
 | Table 1 (source frames by K) | `make_paper_assets.py: table1` | `results/paper/table1.csv` |
-| Table 2, Figure 3 (policies) | `table2`, `fig_pol` | `table2.csv`, `fig3_policies.png` |
-| Table 3 (paired comparisons) | `table3` | `table3.csv` |
-| Table 4 (ablations, H.264) | `table4` | `table4.csv` |
-| Tables 5-6, Figure 4 (unseen MIDV-DynAttack) | `unseen_table`, `fig_pol(unseen)` | `table5.csv`, `table5b.csv`, `fig4_unseen.png` |
-| Table 7 (upload time) | `time_table` | `table6.csv` |
 | Figure 2 (EER vs budget per K) | `fig_k` | `fig2_k_vs_budget.png` |
+| Table 2, Figure 3 (policies) | `policy_compact`, `fig_pol` | `table2c.csv` (with CIs: `table2.csv`), `fig3_policies.png` |
+| Table 3 (paired comparisons) | `comparisons_compact` | `table3c.csv` (long form: `table3.csv`, `table4.csv`) |
+| Figure 4 (unseen MIDV-DynAttack) | `fig_pol(unseen=True)` | `fig4_unseen.png`; numbers in `table5.csv`, per species `table5b.csv` |
+| Table 4 (upload time) | `time_table` | `table6.csv` |
+| Ablations quoted in Section 4.4 | `comparisons_wide` | `table4b.csv` |
 
 `results/v3/` holds the outputs of `make study`: every configuration (`configs.csv`), the
 validation-selected plans (`selection.csv`), test metrics per fold (`policies.csv`),

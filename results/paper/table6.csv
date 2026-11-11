@@ -5,4 +5,4 @@ Payload,iraq_mobile_median,iraq_operator_low,geo_hughesnet,geo_viasat,gprs_2g
 16 kB,0.33,0.34,2.74,2.76,21
 32 kB,0.34,0.37,2.77,2.88,38
 64 kB,0.42,0.46,3.46,3.59,70
-"785 kB (16 source frames, largest clip)",0.80,1.78,6.09,9.36,818
+785 kB (16 source frames),0.80,1.78,6.09,9.36,818
