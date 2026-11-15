@@ -9,7 +9,7 @@ CACHE_H264:= data/cache_h264
 RES       := results/v3
 PAPER     := results/paper
 
-.PHONY: test data cache cache-h264 study paper all
+.PHONY: test data cache cache-h264 study paper traces cost testbed all
 
 test:
 	$(PY) -m pytest -q tests
@@ -30,8 +30,19 @@ study:           ## all folds, policies, ablations, bootstrap statistics, unseen
 	$(PY) -m idpad.study_v3 --cache $(CACHE) --h264 $(CACHE_H264) --cropped_root $(DATA) \
 	    --split_root $(SPLITS) --out $(RES) --unseen
 
-paper:           ## Tables 1-7 and Figures 1-4 of the paper
-	$(PY) scripts/fig_pipeline.py $(PAPER)/fig1_pipeline.png
+paper:           ## Tables 4-10 and Figures 1-4 of the paper
+	$(PY) scripts/fig_pipeline.py $(PAPER)/fig1_datapath.png
+	$(PY) scripts/fig_system.py $(PAPER)/fig1_pipeline.png
 	$(PY) scripts/make_paper_assets.py --res $(RES) --out $(PAPER)
 
-all: test cache cache-h264 study paper
+traces:          ## Tables 11-12: published budget rules on measured cellular uplinks
+	bash scripts/get_traces.sh
+	$(PY) scripts/trace_comparison.py --boot 10000
+
+cost:            ## Table 13: time per attempt on this machine
+	$(PY) scripts/cost_benchmark.py --reps 50
+
+testbed:         ## Table 14: Eq. (8) against a real TCP/TLS 1.3 stack (Linux, netem, user namespace)
+	unshare -rn $(PY) scripts/testbed.py --reps 5 --out $(PAPER)/table12_testbed_raw.csv
+
+all: test cache cache-h264 study paper traces cost

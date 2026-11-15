@@ -1,9 +1,12 @@
-"""Uplink model that turns a payload size into end-to-end verification time.
+"""Uplink model that turns a payload size into delivery time.
 
-The profiles are *assumptions*, listed in ``configs/links.yaml`` so a reviewer can
-change them. Time = connection set-up (``setup_rtts`` x RTT) + payload / effective
-goodput, where goodput accounts for packet loss with a simple TCP-like penalty
-(Mathis et al., 1997) capped by the link rate.
+The paper uses ``Link.upload_seconds_tcp``: one request over a new TCP connection with
+TLS 1.3 (two handshake round trips), slow start from ten segments, 1,448-byte segments
+charged 1,500 bytes on the wire, and one round trip for the last round and the reply
+(Eq. 8). ``budget_for_deadline`` inverts that model. The older linear model
+``upload_seconds`` (set-up round trips + payload / goodput, with an optional Mathis-style
+loss penalty) is kept for the pilot study only. Link profiles are assumptions listed in
+``configs/links.yaml``.
 """
 
 from __future__ import annotations
@@ -55,10 +58,27 @@ class Link:
             cwnd *= 2
         return t
 
-    def budget_for_deadline(self, deadline_s: float) -> int:
-        """Largest payload that arrives within ``deadline_s`` (0 if impossible)."""
-        t = deadline_s - self.setup_rtts * self.rtt_ms / 1000.0
-        return max(0, int(t * self.goodput_bps() / 8))
+    def budget_for_deadline(self, deadline_s: float, grid=None) -> int:
+        """Largest payload (bytes) whose ``upload_seconds_tcp`` meets ``deadline_s`` (0 if none).
+
+        T is non-decreasing in the payload, so a binary search finds the generalised inverse.
+        With ``grid`` (iterable of byte budgets) the answer is restricted to that grid (Eq. 2).
+        """
+        if grid is not None:
+            ok = [b for b in grid if self.upload_seconds_tcp(int(b)) <= deadline_s]
+            return int(max(ok)) if ok else 0
+        if self.upload_seconds_tcp(0) > deadline_s:
+            return 0
+        lo, hi = 0, 1
+        while self.upload_seconds_tcp(hi) <= deadline_s:
+            lo, hi = hi, hi * 2
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            if self.upload_seconds_tcp(mid) <= deadline_s:
+                lo = mid
+            else:
+                hi = mid
+        return lo
 
 
 DEFAULT_LINKS = (

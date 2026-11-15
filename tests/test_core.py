@@ -71,9 +71,10 @@ def test_metrics():
 
 
 def test_link_budget_roundtrip():
-    link = Link("sat", 512, 650, 0.01)
-    b = link.budget_for_deadline(5.0)
-    assert b > 0 and link.upload_seconds(b) == pytest.approx(5.0, rel=1e-3)
+    link = Link("gprs", 8, 1000)
+    b = link.budget_for_deadline(10.0)
+    assert b > 0 and link.upload_seconds_tcp(b) <= 10.0 < link.upload_seconds_tcp(b + 1448)
+    assert link.budget_for_deadline(10.0, grid=[2000, 4000, 8000]) == 4000
 
 
 def test_identity_key_and_leakage():

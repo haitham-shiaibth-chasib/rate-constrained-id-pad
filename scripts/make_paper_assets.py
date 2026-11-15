@@ -169,13 +169,17 @@ def unseen_table(res):
 def time_table(links_yaml, res):
     p = pd.read_csv(res / "policies.csv")
     links = load_links(links_yaml)
-    src16 = p[(p.policy == "video16") & (p.budget == -1)].max_bytes.max()
+    ph = p[(p.policy == "photo") & (p.budget == -1)]
+    v16 = p[(p.policy == "video16") & (p.budget == -1)]
+    refs = [(int(ph.mean_bytes.mean()), "{:.0f} kB (one source frame, mean)"),
+            (int(ph.max_bytes.max()), "{:.0f} kB (one source frame, largest)"),
+            (int(v16.mean_bytes.mean()), "{:.0f} kB (16 source frames, mean)")]
     rows = []
-    for b in [*BUDGETS, int(src16)]:
-        r = {"Payload": f"{b // 1000} kB" if b in BUDGETS else f"{b / 1000:.0f} kB (16 source frames)"}
+    for b, lab in [(b, None) for b in BUDGETS] + refs:
+        r = {"Payload": f"{b // 1000} kB" if lab is None else lab.format(b / 1000)}
         for l in links:
             t = l.upload_seconds_tcp(b)
-            r[l.name] = f"{t:.2f}" if t < 10 else f"{t:.0f}"
+            r[l.name] = f"{t:.2f}" if t < 5 else f"{t:.1f}"
         rows.append(r)
     return pd.DataFrame(rows)
 
@@ -207,7 +211,7 @@ def fig_k(res, out):
     fig.savefig(out, bbox_inches="tight"); plt.close(fig)
 
 
-def fig_pol(res, out, policies, labels, unseen=False):
+def fig_pol(res, out, policies, labels, unseen=False, ci_path=None):
     fig, ax = plt.subplots(figsize=(5.6, 3.4), dpi=300)
     if unseen:
         u = pd.read_csv(res / "unseen.csv")
@@ -216,7 +220,7 @@ def fig_pol(res, out, policies, labels, unseen=False):
             g = g[(g.index > 0) & (g["count"] == 5)]
             ax.plot(g.index / 1000, 100 * g["mean"], marker=m, ms=4, lw=1.2, label=lab)
     else:
-        p = pd.read_csv(res / "policies.csv"); ci = pd.read_csv(res / "policy_ci.csv")
+        p = pd.read_csv(res / "policies.csv"); ci = pd.read_csv(ci_path or res / "policy_ci.csv")
         for pol, lab, m in zip(policies, labels, "osv^D"):
             g = p[p.policy == pol].groupby("budget").eer.agg(["mean", "count"])
             g = g[(g.index > 0) & (g["count"] == 5)]
@@ -226,7 +230,7 @@ def fig_pol(res, out, policies, labels, unseen=False):
                         marker=m, ms=4, lw=1.2, capsize=2.5, label=lab)
     ax.set_xscale("log", base=2); ax.set_xticks([2, 4, 8, 16, 32, 64]); ax.set_xticklabels(["2", "4", "8", "16", "32", "64"])
     ax.set_xlabel("Uplink budget per attempt (kB)"); ax.set_ylabel("Test EER (%)")
-    ax.legend(frameon=False, fontsize=9); ax.grid(alpha=0.3, lw=0.5)
+    ax.legend(frameon=False, fontsize=8, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.2)); ax.grid(alpha=0.3, lw=0.5)
     fig.savefig(out, bbox_inches="tight"); plt.close(fig)
 
 
@@ -260,7 +264,7 @@ def main():
             fh.write(f"## {name}\n\n{df.to_markdown(index=False)}\n\n")
     fig_k(res, out / "fig2_k_vs_budget.png")
     labs = [LAB[x] for x in pols]
-    fig_pol(res, out / "fig3_policies.png", pols, labs)
+    fig_pol(res, out / "fig3_policies.png", pols, labs, ci_path=Path("results/v3_identity/policy_ci.csv"))   # identity-level intervals
     fig_pol(res, out / "fig4_unseen.png", pols, labs, unseen=True)
     print(open(out / "tables.md").read())
 

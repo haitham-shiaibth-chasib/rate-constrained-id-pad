@@ -1,0 +1,44 @@
+{
+ "info": {
+  "h264_crf_found_4kB": 36,
+  "h264_encodes": 2,
+  "webp2_q_found_4kB": 10,
+  "webp4_q_found_4kB": 20,
+  "ffmpeg_process_start_ms_median": 34.8,
+  "machine": "x86_64",
+  "threads": 1,
+  "torch": "2.14.1+cpu",
+  "pyav": "19.0.2",
+  "reps": 50
+ },
+ "ms_median_p95": {
+  "Client: budget choice, Eq. (2)": [
+   0.002,
+   0.003
+  ],
+  "Client: H.264, 16 frames, scale 0.25, one encode": [
+   9.209,
+   10.554
+  ],
+  "Client: H.264, 16 frames, scale 0.25, rate-factor search for 4 kB": [
+   23.455,
+   33.251
+  ],
+  "Client: 2 WebP stills, scale 0.5, quality search for 4 kB": [
+   14.077,
+   14.303
+  ],
+  "Client: 4 WebP stills, scale 0.25, quality search for 4 kB": [
+   12.083,
+   18.217
+  ],
+  "Server: decode H.264 stream, embed and score 16 frames": [
+   196.185,
+   215.965
+  ],
+  "Server: decode, embed and score 2 WebP stills": [
+   25.402,
+   36.936
+  ]
+ }
+}

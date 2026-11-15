@@ -5,7 +5,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
-out = sys.argv[1] if len(sys.argv) > 1 else "results/paper/fig1_pipeline.png"
+out = sys.argv[1] if len(sys.argv) > 1 else "results/paper/fig1_datapath.png"
 import os; os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
 plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "Tinos", "DejaVu Serif"], "font.size": 10})
 fig, ax = plt.subplots(figsize=(6.8, 2.6), dpi=300)
