@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "rate-constrained-id-pad: deadline-aware configuration of capture and encoding for remote identity-document verification over constrained uplinks"
+type: software
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/haitham-shiaibth-chasib/rate-constrained-id-pad"
+authors:
+  - family-names: Chasib
+    given-names: Haitham Shiaibth
+    affiliation: "General Directorate of Education in Babylon, Ministry of Education, Hilla, Babylon, Iraq"
+    orcid: "https://orcid.org/0000-0003-0522-2131"
+  - family-names: Al-Ogaili
+    given-names: Israa Jaber Khalaf
+    affiliation: "General Directorate of Education in Babylon, Ministry of Education, Hilla, Babylon, Iraq"
+    orcid: "https://orcid.org/0009-0006-2747-6342"
+keywords:
+  - presentation attack detection
+  - identity documents
+  - constrained uplinks
+  - deadline-aware configuration
+  - network management
